@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MY EXPENSES</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  background: #101827;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+h1 {
+  color: #64e6a5;
+}
+
+.card {
+  background: #1d2a3d;
+  padding: 20px;
+  border-radius: 16px;
+  margin-top: 20px;
+}
+
+.balance {
+  font-size: 32px;
+  font-weight: bold;
+}
+
+input, select, button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 12px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+}
+
+button {
+  background: #64e6a5;
+  color: #101827;
+  font-weight: bold;
+}
+
+.expense {
+  padding: 12px;
+  border-bottom: 1px solid #405067;
+}
+</style>
+</head>
+
+<body>
+
+<h1>MY EXPENSES</h1>
+<p>Мои личные финансы</p>
+
+<div class="card">
+  <p>Текущий баланс</p>
+  <div class="balance" id="balance">0 ₸</div>
+</div>
+
+<div class="card">
+  <h2>Добавить расход</h2>
+
+  <input id="name" placeholder="Название покупки">
+
+  <input id="amount" type="number" placeholder="Сумма в тенге">
+
+  <select id="category">
+    <option>Продукты</option>
+    <option>Транспорт</option>
+    <option>Развлечения</option>
+    <option>Покупки</option>
+    <option>Другое</option>
+  </select>
+
+  <button onclick="addExpense()">Добавить расход</button>
+</div>
+
+<div class="card">
+  <h2>История расходов</h2>
+  <div id="history">Пока расходов нет</div>
+</div>
+
+<script>
+let expenses = JSON.parse(
+  localStorage.getItem("expenses") || "[]"
+);
+
+function addExpense() {
+  let name = document.getElementById("name").value;
+  let amount = Number(document.getElementById("amount").value);
+  let category = document.getElementById("category").value;
+
+  if (!name || amount <= 0) {
+    alert("Заполни название и сумму!");
+    return;
+  }
+
+  expenses.push({
+    name: name,
+    amount: amount,
+    category: category
+  });
+
+  localStorage.setItem("expenses", JSON.stringify(expenses));
+
+  document.getElementById("name").value = "";
+  document.getElementById("amount").value = "";
+
+  render();
+}
+
+function render() {
+  let total = 0;
+  let history = document.getElementById("history");
+
+  history.innerHTML = "";
+
+  expenses.forEach(function(item) {
+    total += item.amount;
+
+    history.innerHTML +=
+      '<div class="expense">' +
+      item.name + ' — ' +
+      item.amount.toLocaleString("ru-RU") +
+      ' ₸ <br>' + item.category +
+      '</div>';
+  });
+
+  document.getElementById("balance").textContent =
+    total.toLocaleString("ru-RU") + " ₸";
+
+  if (expenses.length === 0) {
+    history.textContent = "Пока расходов нет";
+  }
+}
+
+render();
+</script>
+
+</body>
+</html>
