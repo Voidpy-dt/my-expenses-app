@@ -14,45 +14,76 @@
 body {
   margin: 0;
   padding: 20px;
-  background: #101827;
+  background: #101a35;
   color: white;
   font-family: Arial, sans-serif;
 }
 
 h1 {
-  color: #64e6a5;
+  color: #39e69b;
+  font-size: 30px;
 }
 
 .card {
-  background: #1d2a3d;
-  padding: 20px;
-  border-radius: 16px;
-  margin-top: 20px;
+  background: linear-gradient(135deg,#2864bd,#347bd1);
+  padding: 22px;
+  border-radius: 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 5px 15px #0003;
 }
 
 .balance {
-  font-size: 32px;
+  font-size: 36px;
   font-weight: bold;
 }
 
-input, select, button {
+input, select {
+  display: block;
   width: 100%;
-  padding: 14px;
-  margin-top: 12px;
+  padding: 16px;
+  margin: 12px 0;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 16px;
 }
 
 button {
-  background: #64e6a5;
-  color: #101827;
+  width: 100%;
+  padding: 17px;
+  border: none;
+  border-radius: 12px;
+  font-size: 17px;
   font-weight: bold;
+  color: white;
+  background: #21d995;
+  margin-top: 8px;
+}
+
+.income-btn {
+  background: #16a875;
+}
+
+.expense-btn {
+  background: #e65c65;
+}
+
+.history-item {
+  padding: 14px 0;
+  border-bottom: 1px solid #ffffff33;
+}
+
+.income {
+  color: #53f3a5;
 }
 
 .expense {
-  padding: 12px;
-  border-bottom: 1px solid #405067;
+  color: #ff8a8a;
+}
+
+small {
+  display: block;
+  margin-top: 5px;
+  opacity: 0.8;
 }
 </style>
 </head>
@@ -63,88 +94,159 @@ button {
 <p>Мои личные финансы</p>
 
 <div class="card">
-  <p>Текущий баланс</p>
+  <h3>Текущий баланс</h3>
   <div class="balance" id="balance">0 ₸</div>
+  <p>Общий доход: <span id="totalIncome">0 ₸</span></p>
+  <p>Общие расходы: <span id="totalExpense">0 ₸</span></p>
+</div>
+
+<div class="card">
+  <h2>Добавить доход</h2>
+
+  <input id="incomeName"
+  type="text" placeholder="Название дохода">
+
+  <input id="incomeAmount"
+  type="number" min="1" placeholder="Сумма в тенге">
+
+  <select id="incomeCategory">
+    <option>Зарплата</option>
+    <option>Подработка</option>
+    <option>Подарок</option>
+    <option>Другое</option>
+  </select>
+
+  <button class="income-btn" onclick="addIncome()">
+    Добавить доход
+  </button>
 </div>
 
 <div class="card">
   <h2>Добавить расход</h2>
 
-  <input id="name" placeholder="Название покупки">
+  <input id="expenseName"
+  type="text" placeholder="Название покупки">
 
-  <input id="amount" type="number" placeholder="Сумма в тенге">
+  <input id="expenseAmount"
+  type="number" min="1" placeholder="Сумма в тенге">
 
-  <select id="category">
+  <select id="expenseCategory">
     <option>Продукты</option>
     <option>Транспорт</option>
     <option>Развлечения</option>
-    <option>Покупки</option>
+    <option>Одежда</option>
+    <option>Жильё</option>
     <option>Другое</option>
   </select>
 
-  <button onclick="addExpense()">Добавить расход</button>
+  <button class="expense-btn" onclick="addExpense()">
+    Добавить расход
+  </button>
 </div>
 
 <div class="card">
-  <h2>История расходов</h2>
-  <div id="history">Пока расходов нет</div>
+  <h2>История операций</h2>
+  <div id="history">Операций пока нет</div>
 </div>
 
 <script>
-let expenses = JSON.parse(
-  localStorage.getItem("expenses") || "[]"
-);
+let incomes = 0;
+let expenses = 0;
+let operations = [];
 
-function addExpense() {
-  let name = document.getElementById("name").value;
-  let amount = Number(document.getElementById("amount").value);
-  let category = document.getElementById("category").value;
+function addIncome() {
+  const name = document.getElementById("incomeName").value.trim();
+  const amount = Number(document.getElementById("incomeAmount").value);
+  const category = document.getElementById("incomeCategory").value;
 
-  if (!name || amount <= 0) {
-    alert("Заполни название и сумму!");
+  if (!name || !Number.isFinite(amount) || amount <= 0) {
+    alert("Введите название и правильную сумму дохода");
     return;
   }
 
-  expenses.push({
-    name: name,
-    amount: amount,
-    category: category
+  incomes += amount;
+
+  operations.unshift({
+    name,
+    amount,
+    category,
+    type: "income"
   });
 
-  localStorage.setItem("expenses", JSON.stringify(expenses));
+  document.getElementById("incomeName").value = "";
+  document.getElementById("incomeAmount").value = "";
 
-  document.getElementById("name").value = "";
-  document.getElementById("amount").value = "";
-
-  render();
+  updateScreen();
 }
 
-function render() {
-  let total = 0;
-  let history = document.getElementById("history");
+function addExpense() {
+  const name = document.getElementById("expenseName").value.trim();
+  const amount = Number(document.getElementById("expenseAmount").value);
+  const category = document.getElementById("expenseCategory").value;
+
+  if (!name || !Number.isFinite(amount) || amount <= 0) {
+    alert("Введите название и правильную сумму расхода");
+    return;
+  }
+
+  expenses += amount;
+
+  operations.unshift({
+    name,
+    amount,
+    category,
+    type: "expense"
+  });
+
+  document.getElementById("expenseName").value = "";
+  document.getElementById("expenseAmount").value = "";
+
+  updateScreen();
+}
+
+function updateScreen() {
+  const balance = incomes - expenses;
+
+  document.getElementById("balance").textContent =
+    balance.toLocaleString("ru-RU") + " ₸";
+
+  document.getElementById("totalIncome").textContent =
+    incomes.toLocaleString("ru-RU") + " ₸";
+
+  document.getElementById("totalExpense").textContent =
+    expenses.toLocaleString("ru-RU") + " ₸";
+
+  const history = document.getElementById("history");
+
+  if (operations.length === 0) {
+    history.textContent = "Операций пока нет";
+    return;
+  }
 
   history.innerHTML = "";
 
-  expenses.forEach(function(item) {
-    total += item.amount;
+  operations.forEach(operation => {
+    const item = document.createElement("div");
+    item.className = "history-item";
 
-    history.innerHTML +=
-      '<div class="expense">' +
-      item.name + ' — ' +
-      item.amount.toLocaleString("ru-RU") +
-      ' ₸ <br>' + item.category +
-      '</div>';
+    const sign = operation.type === "income" ? "+" : "-";
+    const cssClass = operation.type;
+
+    const title = document.createElement("strong");
+    title.className = cssClass;
+    title.textContent = operation.name + " — " + sign +
+      operation.amount.toLocaleString("ru-RU") + " ₸";
+
+    const details = document.createElement("small");
+    details.textContent = operation.category;
+
+    item.appendChild(title);
+    item.appendChild(details);
+    history.appendChild(item);
   });
-
-  document.getElementById("balance").textContent =
-    total.toLocaleString("ru-RU") + " ₸";
-
-  if (expenses.length === 0) {
-    history.textContent = "Пока расходов нет";
-  }
 }
 
-render();
+updateScreen();
 </script>
 
 </body>
